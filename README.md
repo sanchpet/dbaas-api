@@ -27,7 +27,6 @@ This repository contains a **demo example** for creating DBaaS instances in k8s.
 
 ## 📦 Container image sizes
 
-- DB: 241MB
 - API
     - Development environment: 1.24GB
     - Production environment: 41.5MB ; 💡`docker build -f prod.Dockerfile . -t myapp_app`
