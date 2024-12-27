@@ -108,7 +108,7 @@ func (a *API) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.logger.Info().Str(l.KeyReqID, reqID).Str("id", book.ID.String()).Msg("new book created")
+	a.logger.Info().Str(l.KeyReqID, reqID).Str("id", book.ID.String()).Msg("new instance created")
 	w.WriteHeader(http.StatusCreated)
 }
 
