@@ -25,7 +25,7 @@ func New(l *zerolog.Logger, v *validator.Validate) *chi.Mux {
 		instanceAPI := instance.New(l, v)
 		r.Method(http.MethodGet, "/instances", requestlog.NewHandler(instanceAPI.List, l))
 		r.Method(http.MethodPost, "/instances", requestlog.NewHandler(instanceAPI.Create, l))
-		r.Method(http.MethodGet, "/instances/{id}", requestlog.NewHandler(instanceAPI.Read, l))
+		r.Method(http.MethodGet, "/instances/{id}", requestlog.NewHandler(instanceAPI.Get, l))
 		r.Method(http.MethodDelete, "/instances/{id}", requestlog.NewHandler(instanceAPI.Delete, l))
 	})
 

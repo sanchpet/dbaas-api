@@ -14,8 +14,6 @@ import (
 	"dbaas-api/util/validator"
 )
 
-const fmtDBString = "host=%s user=%s password=%s dbname=%s port=%d sslmode=disable"
-
 //	@title			DBaaS API
 //	@version		1.0
 //	@description	This is a sample DBaaS API with a CRUD

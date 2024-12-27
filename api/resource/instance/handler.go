@@ -125,7 +125,7 @@ func (a *API) Create(w http.ResponseWriter, r *http.Request) {
 //	@failure		404
 //	@failure		500	{object}	err.Error
 //	@router			/instances/{id} [get]
-func (a *API) Read(w http.ResponseWriter, r *http.Request) {
+func (a *API) Get(w http.ResponseWriter, r *http.Request) {
 	reqID := ctxUtil.RequestID(r.Context())
 
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
