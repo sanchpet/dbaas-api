@@ -45,7 +45,7 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 	config, err := rest.InClusterConfig()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
+		return nil, fmt.Errorf("Failed to get in-cluster config: %w", err)
 	}
 
 	namespace := instance.User
@@ -58,7 +58,7 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create clientset: %w", err)
+		return nil, fmt.Errorf("Failed to create clientset: %w", err)
 	}
 
 	if err := CreateNamespaceIfNotExist(clientset, namespace); err != nil {
@@ -67,7 +67,7 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 
 	dynClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		return nil, fmt.Errorf("Failed to create dynamic client: %w", err)
 	}
 
 	clusterRes := schema.GroupVersionResource{
@@ -119,7 +119,7 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 
 	result, err := dynClient.Resource(clusterRes).Namespace(instance.User).Create(context.TODO(), cluster, metav1.CreateOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create cluster resource: %w", err)
+		return nil, fmt.Errorf("Failed to create cluster resource: %w", err)
 	}
 
 	fmt.Printf("Created Cluster %s\n", result.GetName())
@@ -150,7 +150,7 @@ func CreateNamespaceIfNotExist(clientset *kubernetes.Clientset, namespace string
 	}
 	// If error is not NotFound, return it
 	if !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to get namespace %s: %w", namespace, err)
+		return fmt.Errorf("Failed to get namespace %s: %w", namespace, err)
 	}
 
 	ns := &v1.Namespace{
@@ -160,7 +160,7 @@ func CreateNamespaceIfNotExist(clientset *kubernetes.Clientset, namespace string
 	}
 	_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to create namespace %s: %w", namespace, err)
+		return fmt.Errorf("Failed to create namespace %s: %w", namespace, err)
 	}
 	fmt.Printf("Created namespace %s\n", namespace)
 	return nil
