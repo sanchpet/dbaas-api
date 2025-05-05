@@ -1,0 +1,9 @@
+apiVersion: v2
+name: dbaas-api
+description: A Helm chart for DBaaS-API
+
+type: application
+
+version: 0.1.1
+
+appVersion: "v0.0.7"
