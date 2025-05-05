@@ -1,6 +1,6 @@
 # Build environment
 # -----------------
-FROM golang:1.23-alpine as build-env
+FROM golang:1.24-alpine AS build-env
 WORKDIR /dbaas-api
 
 RUN apk add --no-cache gcc musl-dev

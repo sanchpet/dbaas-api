@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbaas-test-service
+spec:
+  selector:
+    # Ensure this matches the Pod's labels
+    app: dbaas-test
+  ports:
+    - protocol: TCP
+      port: 8080       # Service port
+      targetPort: 8080 # Container port
+  type: ClusterIP      # Default, exposes service inside the cluster

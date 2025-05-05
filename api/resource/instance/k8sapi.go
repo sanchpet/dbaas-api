@@ -3,11 +3,15 @@ package instance
 import (
 	"context"
 	"fmt"
-	"time"
+	"strconv"
 
 	"github.com/google/uuid"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -38,6 +42,93 @@ func (k *K8sAPI) List() (Instances, error) {
 }
 
 func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
+	config, err := rest.InClusterConfig()
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create clientset: %w", err)
+	}
+
+	ns := instance.User
+	if ns == "" {
+		ns = "default"
+	}
+
+	size := strconv.Itoa(instance.Storage) + "Mi"
+
+	if err := CreateNamespaceIfNotExist(clientset, ns); err != nil {
+		return nil, err
+	}
+
+	dynClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	clusterRes := schema.GroupVersionResource{
+		Group:    "postgresql.cnpg.io",
+		Version:  "v1",
+		Resource: "clusters",
+	}
+
+	cluster := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "postgresql.cnpg.io/v1",
+			"kind":       "Cluster",
+			"metadata": map[string]interface{}{
+				"name":      instance.User + "-cluster",
+				"namespace": instance.User,
+			},
+			"spec": map[string]interface{}{
+				"instances": int64(1), // use int64 for numbers in unstructured
+				"storage": map[string]interface{}{
+					"size":         size,
+					"storageClass": "local-path",
+				},
+				"managed": map[string]interface{}{
+					"services": map[string]interface{}{
+						"additional": []interface{}{
+							map[string]interface{}{
+								"selectorType": "rw",
+								"serviceTemplate": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"name": "test-database",
+										"labels": map[string]interface{}{
+											"test-label": "true",
+										},
+										"annotations": map[string]interface{}{
+											"test-annotation": "true",
+										},
+									},
+									"spec": map[string]interface{}{
+										"type": "NodePort",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cluster.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "postgresql.cnpg.io",
+		Version: "v1",
+		Kind:    "Cluster",
+	})
+
+	result, err := dynClient.Resource(clusterRes).Namespace(instance.User).Create(context.TODO(), cluster, metav1.CreateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cluster resource: %w", err)
+	}
+
+	fmt.Printf("Created Cluster %s\n", result.GetName())
+
 	return instance, nil
 }
 
@@ -56,41 +147,26 @@ func (k *K8sAPI) Delete(id uuid.UUID) (bool, error) {
 	return true, nil
 }
 
-func Test() (Instances, error) {
-	config, err := rest.InClusterConfig()
+func CreateNamespaceIfNotExist(clientset *kubernetes.Clientset, namespace string) error {
+	_, err := clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	if err == nil {
+		// Namespace exists
+		return nil
+	}
+	// If error is not NotFound, return it
+	if !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to get namespace %s: %w", namespace, err)
+	}
 
+	ns := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+	}
+	_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to create namespace %s: %w", namespace, err)
 	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	for {
-		// get pods in all the namespaces by omitting namespace
-		// Or specify namespace to get pods in particular namespace
-		pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			panic(err.Error())
-		}
-		fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
-
-		// Examples for error handling:
-		// - Use helper functions e.g. errors.IsNotFound()
-		// - And/or cast to StatusError and use its properties like e.g. ErrStatus.Message
-		_, err = clientset.CoreV1().Pods("default").Get(context.TODO(), "example-xxxxx", metav1.GetOptions{})
-		if errors.IsNotFound(err) {
-			fmt.Printf("Pod example-xxxxx not found in default namespace\n")
-		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			fmt.Printf("Error getting pod %v\n", statusError.ErrStatus.Message)
-		} else if err != nil {
-			panic(err.Error())
-		} else {
-			fmt.Printf("Found example-xxxxx pod in default namespace\n")
-		}
-
-		time.Sleep(10 * time.Second)
-	}
+	fmt.Printf("Created namespace %s\n", namespace)
+	return nil
 }
