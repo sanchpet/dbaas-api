@@ -10,7 +10,7 @@ jobs:
     env:
       CHART_DIR: helm/charts/dbaas-api
       DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-      OCI_REGISTRY: oci://registry-1.docker.io/${{ vars.DOCKERHUB_USERNAME }}/dbaas-api
+      OCI_REGISTRY: oci://registry-1.docker.io/${{ vars.DOCKERHUB_USERNAME }}
     steps:
       - uses: actions/checkout@v4
 
