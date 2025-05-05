@@ -48,19 +48,20 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 		return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
 	}
 
+	namespace := instance.User
+	clusterName := instance.User + "-cluster"
+	clusterSize := strconv.Itoa(instance.Storage) + "Mi"
+	serviceName := clusterName + "-rw"
+	if namespace == "" {
+		namespace = "default"
+	}
+
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create clientset: %w", err)
 	}
 
-	ns := instance.User
-	if ns == "" {
-		ns = "default"
-	}
-
-	size := strconv.Itoa(instance.Storage) + "Mi"
-
-	if err := CreateNamespaceIfNotExist(clientset, ns); err != nil {
+	if err := CreateNamespaceIfNotExist(clientset, namespace); err != nil {
 		return nil, err
 	}
 
@@ -80,13 +81,13 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 			"apiVersion": "postgresql.cnpg.io/v1",
 			"kind":       "Cluster",
 			"metadata": map[string]interface{}{
-				"name":      instance.User + "-cluster",
-				"namespace": instance.User,
+				"name":      clusterName,
+				"namespace": namespace,
 			},
 			"spec": map[string]interface{}{
 				"instances": int64(1), // use int64 for numbers in unstructured
 				"storage": map[string]interface{}{
-					"size":         size,
+					"size":         clusterSize,
 					"storageClass": "local-path",
 				},
 				"managed": map[string]interface{}{
@@ -96,13 +97,7 @@ func (k *K8sAPI) Create(instance *Instance) (*Instance, error) {
 								"selectorType": "rw",
 								"serviceTemplate": map[string]interface{}{
 									"metadata": map[string]interface{}{
-										"name": "test-database",
-										"labels": map[string]interface{}{
-											"test-label": "true",
-										},
-										"annotations": map[string]interface{}{
-											"test-annotation": "true",
-										},
+										"name": serviceName,
 									},
 									"spec": map[string]interface{}{
 										"type": "NodePort",
