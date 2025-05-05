@@ -47,7 +47,7 @@ func (a *API) List(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		a.logger.Error().Str(l.KeyReqID, reqID).Err(err).Msg("")
-		e.ServerError(w, e.RespDBDataAccessFailure)
+		e.ServerError(w, e.RespClusterAccessFailure)
 		return
 	}
 
@@ -104,11 +104,11 @@ func (a *API) Create(w http.ResponseWriter, r *http.Request) {
 	book, err := a.k8sapi.Create(newInstance)
 	if err != nil {
 		a.logger.Error().Str(l.KeyReqID, reqID).Err(err).Msg("")
-		e.ServerError(w, e.RespDBDataInsertFailure)
+		e.ServerError(w, e.RespClusterCreateFailure)
 		return
 	}
 
-	a.logger.Info().Str(l.KeyReqID, reqID).Str("id", book.ID.String()).Msg("new instance created")
+	a.logger.Info().Str(l.KeyReqID, reqID).Str("id", book.ID.String()).Msg("New instance created")
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -139,7 +139,7 @@ func (a *API) Get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 
 		a.logger.Error().Str(l.KeyReqID, reqID).Err(err).Msg("")
-		e.ServerError(w, e.RespDBDataAccessFailure)
+		e.ServerError(w, e.RespClusterAccessFailure)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (a *API) Delete(w http.ResponseWriter, r *http.Request) {
 	result, err := a.k8sapi.Delete(id)
 	if err != nil {
 		a.logger.Error().Str(l.KeyReqID, reqID).Err(err).Msg("")
-		e.ServerError(w, e.RespDBDataRemoveFailure)
+		e.ServerError(w, e.RespClusterRemoveFailure)
 		return
 	}
 	if !result {

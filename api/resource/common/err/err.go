@@ -5,10 +5,10 @@ import (
 )
 
 var (
-	RespDBDataInsertFailure = []byte(`{"error": "db data insert failure"}`)
-	RespDBDataAccessFailure = []byte(`{"error": "db data access failure"}`)
-	RespDBDataUpdateFailure = []byte(`{"error": "db data update failure"}`)
-	RespDBDataRemoveFailure = []byte(`{"error": "db data remove failure"}`)
+	RespClusterCreateFailure = []byte(`{"error": "Failed to create a cluster"}`)
+	RespClusterAccessFailure = []byte(`{"error": "Failed to access the cluster"}`)
+	RespClusterUpdateFailure = []byte(`{"error": "Failed to update the cluster"}`)
+	RespClusterRemoveFailure = []byte(`{"error": "Failed to remove the cluster"}`)
 
 	RespJSONEncodeFailure = []byte(`{"error": "json encode failure"}`)
 	RespJSONDecodeFailure = []byte(`{"error": "json decode failure"}`)
