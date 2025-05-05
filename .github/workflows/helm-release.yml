@@ -25,5 +25,5 @@ jobs:
 
       - name: Push chart to Docker Hub OCI
         run: |
-          CHART_TGZ=$(ls ${CHART_DIR}-*.tgz | head -n1)
+          CHART_TGZ=$(ls dbaas-api-*.tgz | head -n1)
           helm push $CHART_TGZ $OCI_REGISTRY
